@@ -6,30 +6,26 @@ from tweepy import OAuthHandler
 from tweepy import Stream
 
 # Variables that contain the user credentials to access Twitter API
-from local_settings import KINESIS_STREAM_NAME, CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+from local_settings import KINESIS_DELIVERY_STREAM, CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
 
 
 class TweetStreamListener(StreamListener):
     # on success
     def on_data(self, data):
         print('On data')
-        # decode json
         tweet = json.loads(data)
-        if 'text' in tweet.keys():
-            payload = {
-                'id': str(tweet['id']),
-                'tweet': str(tweet['text'].encode('utf8', 'replace')),
-                'ts': str(tweet['created_at']),
-            }
-
-            try:
+        try:
+            if 'text' in tweet.keys():
+                message = json.dumps(tweet)
+                message = message + ',\n'
                 kinesis_client.put_record(
-                    StreamName=KINESIS_STREAM_NAME,
-                    Data=json.dumps(payload),
-                    PartitionKey='0'  # since we have only 1 shard
+                    DeliveryStreamName=KINESIS_DELIVERY_STREAM,
+                    Record={
+                        'Data': message
+                    }
                 )
-            except Exception as e:
-                print(e)
+        except Exception as e:
+            print(e)
 
         return True
 
@@ -46,7 +42,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Create kinesis client connection
-    kinesis_client = boto3.client('kinesis')
+    kinesis_client = boto3.client('firehose', region_name='ap-southeast-1')
 
     # Create instance of the tweepy tweet stream listener
     listener = TweetStreamListener()
@@ -58,6 +54,5 @@ if __name__ == '__main__':
     # Create instance of the tweepy stream
     stream = Stream(auth, listener)
 
-    # search twitter for tags or keywords passed, filter only India tweets
+    # search twitter for tags or keywords passed
     stream.filter(track=args.keywords, languages=['en'])
-    stream.filter(locations=[68.1766451354, 7.96553477623, 97.4025614766, 35.4940095078])
