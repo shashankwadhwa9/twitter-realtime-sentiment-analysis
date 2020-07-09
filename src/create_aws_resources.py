@@ -1,3 +1,4 @@
+import os
 import json
 import time
 import boto3
@@ -145,10 +146,50 @@ def create_kinesis_delivery_stream():
             current_tries += 1
 
 
+def package_lambda():
+    """
+    Packages the lambda code in a zip file
+    :return: Zipped code content
+    """
+
+    lambda_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lambda')
+    commands = [
+        f'cd {lambda_dir} && rm -rf lambda_env',  # Remove previously created env
+        f'cd {lambda_dir} && virtualenv -p python3.6 lambda_env',  # Create new virtualenv
+        f'cd {lambda_dir} && source lambda_env/bin/activate && pip install -r requirements.txt',  # Activate the env
+        f'cd {lambda_dir}/lambda_env/lib/python3.6/site-packages/ && zip -r9 ../../../../lambda.zip *',
+        f'cd {lambda_dir} && zip -g lambda.zip lambda_runner.py'
+    ]
+
+    for cmd in commands:
+        os.system(cmd)
+
+    with open(f'{lambda_dir}/lambda.zip', 'rb') as f:
+        zipped_code = f.read()
+
+    return zipped_code
+
+
 def create_lambda_function():
-    pass
+    client = boto3.client('lambda')
+    response = client.create_function(
+        FunctionName='load-tweets-to-es',
+        Runtime='python3.6',
+        Role='string',
+        Handler='lambda_runner.lambda_handler',
+        Code={
+            'ZipFile': b'bytes',
+            'S3Bucket': 'string',
+            'S3Key': 'string',
+            'S3ObjectVersion': 'string'
+        },
+        Description='Lambda function to process a tweet and push to ES',
+        Timeout=900,
+        MemorySize=1280
+    )
 
 
 if __name__ == '__main__':
     # create_s3_bucket()
     # create_kinesis_delivery_stream()
+    package_lambda()
