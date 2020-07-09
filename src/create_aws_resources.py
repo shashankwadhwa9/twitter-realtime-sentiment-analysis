@@ -108,6 +108,8 @@ def create_kinesis_delivery_stream():
     print('Attached policy to role')
     time.sleep(10)
 
+    firehose_client = boto3.client('firehose')
+    role_arn = role['Role']['Arn']
     max_tries = 3
     current_tries = 0
     success = False
@@ -115,8 +117,6 @@ def create_kinesis_delivery_stream():
     while current_tries < max_tries and success is False:
         try:
             # Create Kinesis Data Firehose delivery stream
-            firehose_client = boto3.client('firehose')
-            role_arn = role['Role']['Arn']
             response = firehose_client.create_delivery_stream(
                 DeliveryStreamName=KINESIS_DELIVERY_STREAM,
                 DeliveryStreamType='DirectPut',
@@ -171,25 +171,109 @@ def package_lambda():
 
 
 def create_lambda_function():
-    client = boto3.client('lambda')
-    response = client.create_function(
-        FunctionName='load-tweets-to-es',
-        Runtime='python3.6',
-        Role='string',
-        Handler='lambda_runner.lambda_handler',
-        Code={
-            'ZipFile': b'bytes',
-            'S3Bucket': 'string',
-            'S3Key': 'string',
-            'S3ObjectVersion': 'string'
-        },
-        Description='Lambda function to process a tweet and push to ES',
-        Timeout=900,
-        MemorySize=1280
+    iam_client = boto3.client('iam')
+
+    # Create role
+    assume_role_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "lambda.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }
+    role_name = 'lambda_twitter_role'
+    role = iam_client.create_role(
+        RoleName=role_name,
+        AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
+        Description='S3 and ES access for twitter lambda'
     )
+    print('Role created')
+    time.sleep(10)
+
+    # Create policy
+    policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": "logs:CreateLogGroup",
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "es:ESHttpPost"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:GetObject"
+                ],
+                "Resource": "arn:aws:s3:::*"
+            }
+        ]
+    }
+    policy = iam_client.create_policy(
+        PolicyName='lambda_twitter_role_policy',
+        PolicyDocument=json.dumps(policy_document)
+    )
+    print('Policy created')
+    time.sleep(10)
+
+    # Attach policy to the role
+    iam_client.attach_role_policy(
+        PolicyArn=policy['Policy']['Arn'],
+        RoleName=role_name
+    )
+    print('Attached policy to role')
+    time.sleep(10)
+
+    client = boto3.client('lambda')
+    zipped_code = package_lambda()
+    role_arn = role['Role']['Arn']
+    max_tries = 3
+    current_tries = 0
+    success = False
+    # Sometimes it takes time for aws to correctly identify the role, hence try a few times
+    while current_tries < max_tries and success is False:
+        try:
+            response = client.create_function(
+                FunctionName='load-tweets-to-es',
+                Runtime='python3.6',
+                Role=role_arn,
+                Handler='lambda_runner.lambda_handler',
+                Code={
+                    'ZipFile': zipped_code,
+                },
+                Description='Lambda function to process a tweet and push to ES',
+                Timeout=900,
+                MemorySize=1280
+            )
+            print(response)
+            print('Lambda created')
+            success = True
+        except Exception as e:
+            print(e)
+            time.sleep(10)
+            current_tries += 1
 
 
 if __name__ == '__main__':
     # create_s3_bucket()
     # create_kinesis_delivery_stream()
-    package_lambda()
+    create_lambda_function()
