@@ -312,8 +312,30 @@ def add_trigger_for_s3_bucket():
     print('Trigger added for S3 bucket')
 
 
+def create_es_cluster():
+    client = boto3.client('es')
+    response = client.create_elasticsearch_domain(
+        DomainName='sw-es-cluster',
+        ElasticsearchVersion='7.4',
+        ElasticsearchClusterConfig={
+            'InstanceType': 't2.small.elasticsearch',
+            'InstanceCount': 1,
+            'DedicatedMasterEnabled': False,
+            'ZoneAwarenessEnabled': False
+        },
+        EBSOptions={
+            'EBSEnabled': True,
+            'VolumeType': 'standard',
+            'VolumeSize': 10
+        }
+    )
+    print(response)
+    print('ES cluster created')
+
+
 if __name__ == '__main__':
     # create_s3_bucket()
     # create_kinesis_delivery_stream()
     # create_lambda_function()
-    add_trigger_for_s3_bucket()
+    # add_trigger_for_s3_bucket()
+    create_es_cluster()
