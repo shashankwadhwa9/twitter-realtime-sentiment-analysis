@@ -4,6 +4,8 @@ import time
 import boto3
 from local_settings import S3_BUCKET_NAME, KINESIS_DELIVERY_STREAM
 
+ACCOUNT_ID = boto3.client('sts').get_caller_identity().get('Account')
+
 
 def create_s3_bucket():
     client = boto3.client('s3')
@@ -273,7 +275,45 @@ def create_lambda_function():
             current_tries += 1
 
 
+def add_trigger_for_s3_bucket():
+    """
+    Adds a trigger for S3. If any new file comes to the S3 bucket, the lambda function would get invocated.
+    """
+    # Give permission to S3 bucket to invoke this lambda
+    lambda_client = boto3.client('lambda')
+    lambda_client.add_permission(
+        Action='lambda:InvokeFunction',
+        FunctionName='load-tweets-to-es',
+        Principal='s3.amazonaws.com',
+        SourceAccount=str(ACCOUNT_ID),
+        SourceArn=f'arn:aws:s3:::{S3_BUCKET_NAME}',
+        StatementId='s3',
+    )
+    print('Resource-based policy added to lambda')
+    time.sleep(20)
+
+    # Add event trigger
+    s3_client = boto3.client('s3')
+    response = s3_client.put_bucket_notification_configuration(
+        Bucket=S3_BUCKET_NAME,
+        NotificationConfiguration={
+            'LambdaFunctionConfigurations': [
+                {
+                    'Id': 'sw-tweets-lambda-trigger',
+                    'LambdaFunctionArn': f'arn:aws:lambda:ap-south-1:{ACCOUNT_ID}:function:load-tweets-to-es',
+                    'Events': [
+                        's3:ObjectCreated:Put'
+                    ]
+                }
+            ]
+        }
+    )
+    print(response)
+    print('Trigger added for S3 bucket')
+
+
 if __name__ == '__main__':
     # create_s3_bucket()
     # create_kinesis_delivery_stream()
-    create_lambda_function()
+    # create_lambda_function()
+    add_trigger_for_s3_bucket()
