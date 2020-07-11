@@ -2,7 +2,7 @@ import os
 import json
 import time
 import boto3
-from local_settings import S3_BUCKET_NAME, KINESIS_DELIVERY_STREAM
+from local_settings import S3_BUCKET_NAME, KINESIS_DELIVERY_STREAM, SOURCE_CMD
 
 ACCOUNT_ID = boto3.client('sts').get_caller_identity().get('Account')
 
@@ -158,7 +158,8 @@ def package_lambda():
     commands = [
         f'cd {lambda_dir} && rm -rf lambda_env',  # Remove previously created env
         f'cd {lambda_dir} && virtualenv -p python3.6 lambda_env',  # Create new virtualenv
-        f'cd {lambda_dir} && source lambda_env/bin/activate && pip install -r requirements.txt',  # Activate the env
+        # Activate the env (SOURCE_CMD is "source" for Mac, "." for Ubuntu)
+        f'cd {lambda_dir} && {SOURCE_CMD} lambda_env/bin/activate && pip install -r requirements.txt',
         f'cd {lambda_dir}/lambda_env/lib/python3.6/site-packages/ && zip -r9 ../../../../lambda.zip *',
         f'cd {lambda_dir} && zip -g lambda.zip *.py'
     ]
