@@ -1,4 +1,5 @@
 import json
+import traceback
 import boto3
 from tweet_utils import process_tweet
 from es_utils import load_to_es
@@ -21,7 +22,7 @@ def lambda_handler(event, context):
         try:
             obj = s3.get_object(Bucket=bucket, Key=key)
         except Exception as e:
-            print(e)
+            traceback.print_exception(type(e), e, e.__traceback__)
             print(f'ERROR: Error getting key {key} from bucket {bucket}')
             continue
 
@@ -35,7 +36,7 @@ def lambda_handler(event, context):
             tweets_str = '[' + s3_file_content + ']'
             tweets = json.loads(tweets_str)
         except Exception as e:
-            print(e)
+            traceback.print_exception(type(e), e, e.__traceback__)
             print(f'ERROR: Error loading json from {key} in bucket {bucket}')
             continue
 
@@ -48,7 +49,7 @@ def lambda_handler(event, context):
         try:
             load_to_es(processed_tweets)
         except Exception as e:
-            print(e)
+            traceback.print_exception(type(e), e, e.__traceback__)
             print(f'ERROR: Error loading tweets data to ES for {key} of bucket {bucket}')
             continue
 
