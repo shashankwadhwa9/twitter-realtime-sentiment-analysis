@@ -23,7 +23,7 @@ def process_tweet(tweet):
     Create tweet dict to load to ES
     """
     tweet_dict = {
-        'id': tweet['id_field'],
+        'id': tweet['id_str'],
         'tweet': tweet['text'],
         'timestamp': tweet['timestamp_ms'],
         'user': {
