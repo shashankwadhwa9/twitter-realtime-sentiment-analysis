@@ -38,7 +38,7 @@ class TweetStreamListener(StreamListener):
 if __name__ == '__main__':
     # Accept keywords
     parser = argparse.ArgumentParser()
-    parser.add_argument('--keywords', help='Keywords to search twitter for', required=True)
+    parser.add_argument('--keyword', type=str, help='Keyword to search twitter for', required=True)
     args = parser.parse_args()
 
     # Create kinesis client connection
@@ -54,5 +54,5 @@ if __name__ == '__main__':
     # Create instance of the tweepy stream
     stream = Stream(auth, listener)
 
-    # search twitter for tags or keywords passed
-    stream.filter(track=args.keywords, languages=['en'])
+    # search twitter for passed keyword
+    stream.filter(track=[args.keyword], languages=['en'])
