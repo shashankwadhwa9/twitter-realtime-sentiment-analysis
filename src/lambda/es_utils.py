@@ -2,7 +2,7 @@ import boto3
 from requests_aws4auth import AWS4Auth
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from elasticsearch.helpers import bulk
-from local_Settings import ES_HOST, REGION
+from local_settings import ES_HOST, REGION
 
 INDEX_NAME = 'tweets'
 INDEX_MAPPING = {
