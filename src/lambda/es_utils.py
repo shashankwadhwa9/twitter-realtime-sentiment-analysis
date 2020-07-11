@@ -88,7 +88,7 @@ def load_to_es(tweets):
         print(f'Loading data of chunk {ctr} of {total_chunks} to ES')
         es_docs = []
         # Convert data to ES bulk load format
-        for doc in chunks:
+        for doc in chunk:
             bulk_doc = {
                 '_index': INDEX_NAME,
                 '_id': doc['id'],
