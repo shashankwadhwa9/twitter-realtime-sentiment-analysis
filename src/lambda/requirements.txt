@@ -1,1 +1,4 @@
 requests==2.24.0
+requests-aws4auth==1.0
+elasticsearch==7.8.0
+textblob==0.15.3

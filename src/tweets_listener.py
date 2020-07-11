@@ -42,7 +42,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Create kinesis client connection
-    kinesis_client = boto3.client('firehose', region_name='ap-southeast-1')
+    kinesis_client = boto3.client('firehose')
 
     # Create instance of the tweepy tweet stream listener
     listener = TweetStreamListener()
