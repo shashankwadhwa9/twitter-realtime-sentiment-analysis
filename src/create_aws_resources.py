@@ -125,7 +125,7 @@ def create_kinesis_delivery_stream():
                 ExtendedS3DestinationConfiguration={
                     'RoleARN': role_arn,
                     'BucketARN': f'arn:aws:s3:::{S3_BUCKET_NAME}',
-                    'Prefix': 'YYYY/MM/DD',
+                    'Prefix': '!{timestamp:yyyy/MM/dd}/',
                     'ErrorOutputPrefix': 'error',
                     'BufferingHints': {
                         'SizeInMBs': 10,
