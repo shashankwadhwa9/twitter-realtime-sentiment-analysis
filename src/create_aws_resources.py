@@ -379,5 +379,5 @@ if __name__ == '__main__':
     # create_kinesis_delivery_stream()
     # create_lambda_function()
     # add_trigger_for_s3_bucket()
-    create_es_cluster()
-    # update_lambda_function_code()
+    # create_es_cluster()
+    update_lambda_function_code()

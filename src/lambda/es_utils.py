@@ -75,11 +75,11 @@ def load_to_es(tweets):
     # Create index if not exists
     if not es.indices.exists(INDEX_NAME):
         print(f'Creating index {INDEX_NAME}')
-        es.indices.create(index=INDEX_NAME, body=INDEX_MAPPING)
-    else:
-        # Update mapping
-        print('Updating mapping')
-        es.indices.put_mapping(index=INDEX_NAME, body=INDEX_MAPPING)
+        es.indices.create(index=INDEX_NAME)
+
+    # Update mapping
+    print('Updating mapping')
+    es.indices.put_mapping(index=INDEX_NAME, body=INDEX_MAPPING)
 
     # Load the data to ES using bulk insert
     chunks = divide_into_chunks(tweets, 1000)
