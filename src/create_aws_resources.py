@@ -160,7 +160,7 @@ def package_lambda():
         f'cd {lambda_dir} && virtualenv -p python3.6 lambda_env',  # Create new virtualenv
         f'cd {lambda_dir} && source lambda_env/bin/activate && pip install -r requirements.txt',  # Activate the env
         f'cd {lambda_dir}/lambda_env/lib/python3.6/site-packages/ && zip -r9 ../../../../lambda.zip *',
-        f'cd {lambda_dir} && zip -g lambda.zip lambda_runner.py'
+        f'cd {lambda_dir} && zip -g lambda.zip *.py'
     ]
 
     for cmd in commands:
@@ -333,9 +333,23 @@ def create_es_cluster():
     print('ES cluster created')
 
 
+def update_lambda_function_code():
+    client = boto3.client('lambda')
+    zipped_code = package_lambda()
+    response = client.update_function_code(
+        FunctionName='load-tweets-to-es',
+        ZipFile=zipped_code,
+        Publish=True,
+        DryRun=False
+    )
+    print(response)
+    print('Lambda code updated')
+
+
 if __name__ == '__main__':
     # create_s3_bucket()
     # create_kinesis_delivery_stream()
     # create_lambda_function()
     # add_trigger_for_s3_bucket()
-    create_es_cluster()
+    # create_es_cluster()
+    update_lambda_function_code()
