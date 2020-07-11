@@ -2,7 +2,7 @@ import os
 import json
 import time
 import boto3
-from local_settings import S3_BUCKET_NAME, KINESIS_DELIVERY_STREAM, SOURCE_CMD
+from local_settings import S3_BUCKET_NAME, KINESIS_DELIVERY_STREAM, SOURCE_CMD, MY_IP_ADDR
 
 ACCOUNT_ID = boto3.client('sts').get_caller_identity().get('Account')
 
@@ -315,6 +315,32 @@ def add_trigger_for_s3_bucket():
 
 def create_es_cluster():
     client = boto3.client('es')
+    es_policy_document = {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": f"arn:aws:iam::{ACCOUNT_ID}:role/lambda_twitter_role"
+          },
+          "Action": "es:*",
+          "Resource": f"arn:aws:es:ap-south-1:{ACCOUNT_ID}:domain/sw-es-cluster/*"
+        },
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "*"
+          },
+          "Action": "es:*",
+          "Resource": f"arn:aws:es:ap-south-1:{ACCOUNT_ID}:domain/sw-es-cluster/*",
+          "Condition": {
+            "IpAddress": {
+              "aws:SourceIp": MY_IP_ADDR
+            }
+          }
+        }
+      ]
+    }
     response = client.create_elasticsearch_domain(
         DomainName='sw-es-cluster',
         ElasticsearchVersion='7.4',
@@ -328,7 +354,8 @@ def create_es_cluster():
             'EBSEnabled': True,
             'VolumeType': 'standard',
             'VolumeSize': 10
-        }
+        },
+        AccessPolicies=json.dumps(es_policy_document)
     )
     print(response)
     print('ES cluster created')
@@ -352,5 +379,5 @@ if __name__ == '__main__':
     # create_kinesis_delivery_stream()
     # create_lambda_function()
     # add_trigger_for_s3_bucket()
-    # create_es_cluster()
-    update_lambda_function_code()
+    create_es_cluster()
+    # update_lambda_function_code()
