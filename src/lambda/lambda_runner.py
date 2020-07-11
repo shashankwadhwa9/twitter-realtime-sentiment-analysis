@@ -10,6 +10,8 @@ def lambda_handler(event, context):
     print('Lambda execution started')
     print(f"Total record sets: {len(event['Records'])}")
 
+    print(event['Records'][0])
+    print('\n')
     for record in event['Records']:
         # Get the bucket name and key for the new file
         bucket = record['s3']['bucket']['name']
@@ -37,6 +39,7 @@ def lambda_handler(event, context):
             print(f'ERROR: Error loading json from {key} in bucket {bucket}')
             continue
 
+        print(tweets[0])
         # Transform the tweets, add sentiment data
         processed_tweets = [process_tweet(tweet) for tweet in tweets]
         print('Tweets processed')
