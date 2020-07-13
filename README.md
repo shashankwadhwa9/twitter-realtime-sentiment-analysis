@@ -5,6 +5,7 @@
 This project is about how to build a data pipeline using big data technologies of AWS like **Kinesis Firehose, S3, Lambda, and Elasticsearch Service** to achieve real time sentiment and time series analysis on Twitter.
 
 ![Pipeline architecture](docs/architecture.jpeg)
+*Pipeline architecture*
 
 All of the resources have been created using this [Python script](https://github.com/shashankwadhwa9/twitter-realtime-sentiment-analysis/blob/master/src/create_aws_resources.py)
 
@@ -53,7 +54,7 @@ One important thing here is to add the **resource policy for the lambda** to all
 
 ----
 ### Create Elasticsearch cluster
-ES will allow us to search and analyze big volumes of data quickly and in near real time. We can perform advanced search queries using ES and can even make a dashboard using * Kibana*.
+ES will allow us to search and analyze big volumes of data quickly and in near real time. We can perform advanced search queries using ES and can even make a dashboard using *Kibana*.
 
 For the ES policy, we give permission to the lambda's IAM role since lambda will write to this ES cluster.
 
@@ -80,7 +81,10 @@ We achieve this using a python program which uses **StreamListener class from Tw
 ----
 ## Pipeline flow
 ![Data loaded to S3 by Kinesis Firehose](docs/1.png)
+*Data loaded to S3 by Kinesis Firehose*
 
 ![S3 data](docs/2.png)
+*S3 data*
 
 ![Final data loaded to Elasticsearch](docs/3.png)
+*Final data loaded to Elasticsearch*
